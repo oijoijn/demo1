@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: crud-app
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: crud-app
+spec:
+  replicas: 2 # 冗長性のために2つ起動
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: go-crud-backend:v1
+        imagePullPolicy: Never # kindクラスタにロードしたイメージを使う
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_DSN
+          valueFrom:
+            secretKeyRef:
+              name: crud-app-secrets
+              key: DB_DSN
+        # 【セキュリティ】自己回復性のためのプローブ
+        readinessProbe: # アプリがリクエストを受け付ける準備ができたか
+          httpGet:
+            path: /api/users # 簡単なAPIエンドポイントを叩く
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe: # アプリが生きているか（固まっていないか）
+          httpGet:
+            path: /api/users
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10

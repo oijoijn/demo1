@@ -1,0 +1,20 @@
+# Node.jsの公式イメージをベースにする
+FROM node:18-alpine
+
+# 作業ディレクトリを設定
+WORKDIR /app
+
+# 依存関係のレイヤーをキャッシュするため、先にコピー
+# package-lock.json が存在しない場合もあるので、ワイルドカードを使うとより堅牢
+COPY package*.json ./
+
+# 依存関係をインストール
+# CI=true をつけると警告がエラー扱いになるのを防ぐ
+RUN CI=true npm install
+
+# ポートを公開
+EXPOSE 3000
+
+# 開発サーバーを起動
+# ソースコードはdocker-compose.ymlでマウントされる
+CMD ["npm", "start"]

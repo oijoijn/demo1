@@ -1,0 +1,51 @@
+services:
+  # 1. MySQLデータベースサービス
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: my_app_db
+    ports:
+      - "33060:3306"
+    volumes:
+      # DBのデータを永続化
+      - db_data:/var/lib/mysql
+      # ★★★ 初期化SQLをマウントする設定を追加 ★★★
+      # ホストの ./mysql ディレクトリをコンテナの /docker-entrypoint-initdb.d にマウント
+      # このディレクトリ内の .sql ファイルは初回起動時に自動で実行される
+      - ./mysql:/docker-entrypoint-initdb.d
+
+  # 2. Goバックエンドサービス (変更なし)
+  backend:
+    build:
+      context: ./backend
+    container_name: go_backend_dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+    environment:
+      DB_DSN: "root:rootpassword@tcp(db:3306)/my_app_db?parseTime=true"
+    depends_on:
+      - db
+
+  # 3. Reactフロントエンドサービス (変更なし)
+  frontend:
+    build:
+      context: ./frontend
+    container_name: react_frontend_dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    depends_on:
+      - backend
+
+# Dockerボリュームの定義
+volumes:
+  db_data:

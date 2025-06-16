@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: crud-app
+spec:
+  selector:
+    app: mysql
+  ports:
+    - protocol: TCP
+      port: 3306
+---
+apiVersion: v1
+kind: PersistentVolumeClaim # 永続ストレージの要求
+metadata:
+  name: mysql-pvc
+  namespace: crud-app
+spec:
+  accessModes:
+    - ReadWriteOnce # 1つのノードからのみ読み書き可能
+  resources:
+    requests:
+      storage: 1Gi # 1GBのストレージを要求
+---
+apiVersion: apps/v1
+kind: StatefulSet # DBなどのステートフルなアプリに最適
+metadata:
+  name: mysql
+  namespace: crud-app
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: "mysql"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: crud-app-secrets
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          value: "my_app_db"
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+        - name: init-sql
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: init-sql
+        configMap: # init.sqlをConfigMap経由でマウント
+          name: mysql-init-cm
+  volumeClaimTemplates: # PVCのテンプレート
+  - metadata:
+      name: mysql-persistent-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: ConfigMap # init.sqlの内容を格納
+metadata:
+  name: mysql-init-cm
+  namespace: crud-app
+data:
+  init.sql: |
+    CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
