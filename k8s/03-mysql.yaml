@@ -4,6 +4,7 @@ metadata:
   name: mysql
   namespace: crud-app
 spec:
+  clusterIP: None
   selector:
     app: mysql
   ports:
@@ -31,7 +32,7 @@ spec:
   selector:
     matchLabels:
       app: mysql
-  serviceName: "mysql"
+  serviceName: mysql
   replicas: 1
   template:
     metadata:

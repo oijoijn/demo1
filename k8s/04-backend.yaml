@@ -29,7 +29,7 @@ spec:
       containers:
       - name: backend
         image: go-crud-backend:v1
-        imagePullPolicy: Never # kindクラスタにロードしたイメージを使う
+        imagePullPolicy: Never 
         ports:
         - containerPort: 8080
         env:
@@ -38,16 +38,15 @@ spec:
             secretKeyRef:
               name: crud-app-secrets
               key: DB_DSN
-        # 【セキュリティ】自己回復性のためのプローブ
-        readinessProbe: # アプリがリクエストを受け付ける準備ができたか
+        readinessProbe: 
           httpGet:
-            path: /api/users # 簡単なAPIエンドポイントを叩く
+            path: /healthz   # ← 変更
             port: 8080
-          initialDelaySeconds: 15
-          periodSeconds: 10
+          initialDelaySeconds: 5
+          periodSeconds: 5
         livenessProbe: # アプリが生きているか（固まっていないか）
           httpGet:
-            path: /api/users
+            path: /healthz
             port: 8080
           initialDelaySeconds: 15
           periodSeconds: 10
