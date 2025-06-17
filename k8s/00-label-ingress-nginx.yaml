@@ -1,7 +1,0 @@
-# k8s/00-label-ingress-nginx.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: ingress-nginx          # 既に存在する名前空間
-  labels:
-    ingress-nginx: ""          # ← NetworkPolicy が期待するラベル

@@ -8,8 +8,8 @@ spec:
     app: backend
   ports:
     - protocol: TCP
-      port: 8080
-      targetPort: 8080
+      port: 8080            # Service ポート
+      targetPort: 8080      # Pod の containerPort
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -17,7 +17,7 @@ metadata:
   name: backend-deployment
   namespace: crud-app
 spec:
-  replicas: 2 # 冗長性のために2つ起動
+  replicas: 2
   selector:
     matchLabels:
       app: backend
@@ -29,7 +29,7 @@ spec:
       containers:
       - name: backend
         image: go-crud-backend:v1
-        imagePullPolicy: Never 
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         env:
@@ -38,13 +38,25 @@ spec:
             secretKeyRef:
               name: crud-app-secrets
               key: DB_DSN
-        readinessProbe: 
+
+        # 🔹 startupProbe ── MySQL が使えるまで最大 150 秒待機
+        startupProbe:
           httpGet:
-            path: /healthz   # ← 変更
+            path: /healthz
             port: 8080
-          initialDelaySeconds: 5
           periodSeconds: 5
-        livenessProbe: # アプリが生きているか（固まっていないか）
+          failureThreshold: 30   # 5 s × 30 回 = 150 秒
+
+        # 🔹 readinessProbe ── アプリがリクエストを処理できるか
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 5
+
+        # 🔹 livenessProbe ── ハング検出
+        livenessProbe:
           httpGet:
             path: /healthz
             port: 8080

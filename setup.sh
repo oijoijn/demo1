@@ -8,7 +8,7 @@ MANIFEST_DIR="k8s"            # マニフェスト格納ディレクトリ
 
 # 適用順（Namespace → Secret → …）
 MANIFESTS=(
-  "$MANIFEST_DIR/00-label-ingress-nginx.yaml" 
+  # "$MANIFEST_DIR/00-label-ingress-nginx.yaml" 
   "$MANIFEST_DIR/01-namespace.yaml"
   "$MANIFEST_DIR/02-secrets.yaml"
   "$MANIFEST_DIR/03-mysql.yaml"

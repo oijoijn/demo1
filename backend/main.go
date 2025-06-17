@@ -40,9 +40,9 @@ func main() {
 		}
 		log.Printf("MySQL 接続失敗 (再試行 %d): %v\n", retry+1, err)
 		retry++
-		if retry > 15 {
-			log.Fatal("DB接続エラー: 試行回数の上限に達しました")
-		}
+		// if retry > 15 {
+		// 	log.Fatal("DB接続エラー: 試行回数の上限に達しました")
+		// }
 		time.Sleep(2 * time.Second)
 	}
 	defer db.Close()
